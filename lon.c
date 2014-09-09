@@ -1,16 +1,28 @@
-#define F_CPU 48000000L
+#include <string.h>
+#include <stdint.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
 
-#define DMA1_BASE			(PERIPH_BASE_AHB1 + 0x00000)
+#define DMA1_BASE			DMA_BASE
 
 #include <libopencm3/stm32/dma.h>
 #include <libopencm3/cm3/nvic.h>
 
 #include "colors.h"
 
+#define PERIOD 14
+
 uint16_t led_buffer[100];
+const uint8_t low = PERIOD * .32;
+const uint8_t high = PERIOD * .64;
+
+void setup_clock(void);
+void setup_gpio(void);
+void setup_timer(void);
+void setup_dma(void);
+void delay(volatile uint32_t loops);
+void ws2812_send(uint8_t (*color)[3], uint16_t len);
 
 void setup_clock(void) {
     rcc_clock_setup_in_hse_8mhz_out_48mhz();
@@ -37,8 +49,7 @@ void setup_timer(void) {
     timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
     timer_set_prescaler(TIM3, 0);
     timer_set_clock_division(TIM3, 0);
-    timer_set_period(TIM3, 14);
-    timer_enable_irq(TIM3, TIM_DIER_CC1DE);
+    timer_set_period(TIM3, PERIOD);
     timer_disable_oc_output(TIM3, TIM_OC1);
     timer_set_oc_mode(TIM3, TIM_OC1, TIM_OCM_TOGGLE);
     timer_set_master_mode(TIM3, TIM_CCMR1_OC1M_PWM1);
@@ -58,6 +69,7 @@ void setup_dma(void) {
     dma_set_memory_address(DMA1, DMA_CHANNEL4, (uint32_t)&led_buffer);
     dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL4);
 /*    dma_enable_channel(DMA1, DMA_CHANNEL4);*/
+    timer_enable_irq(TIM3, TIM_DIER_CC1DE);
 }
 
 void ws2812_send(uint8_t (*color)[3], uint16_t len) {
@@ -77,10 +89,10 @@ void ws2812_send(uint8_t (*color)[3], uint16_t len) {
             c = which[i];   
             for(j = 0; j < 8; j++) {
                 if((color[led][c] << j) & 0x80) {
-                    led_buffer[memaddr] = 17;
+                    led_buffer[memaddr] = high;
                 }
                 else {
-                    led_buffer[memaddr] = 9;
+                    led_buffer[memaddr] = low;
                 }
 
                 memaddr++;
@@ -90,7 +102,6 @@ void ws2812_send(uint8_t (*color)[3], uint16_t len) {
         led++;
         len--;
     }
-
 
     while(memaddr < buffersize) {
         led_buffer[memaddr] = 0;
