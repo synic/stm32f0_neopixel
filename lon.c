@@ -29,8 +29,13 @@ void setup_dma(void);
 void delay(volatile uint32_t loops);
 void ws2812_send(uint8_t (*color)[3], uint16_t len);
 void ws2812_set_color(uint8_t led, uint8_t r, uint8_t g, uint8_t b);
+void ws2812_set_color_single(uint8_t led, uint32_t color);
+uint32_t ws2812_color(uint8_t r, uint8_t b, uint8_t g);
 void ws2812_clear(void);
 void ws2812_show(void);
+void rainbow(uint32_t wait);
+
+uint32_t wheel(char pos);
 
 void ws2812_set_color(uint8_t led, uint8_t r, uint8_t g, uint8_t b) {
     uint32_t n = (led * 24);
@@ -49,12 +54,52 @@ void ws2812_set_color(uint8_t led, uint8_t r, uint8_t g, uint8_t b) {
     }
 }
 
+void ws2812_set_color_single(uint8_t led, uint32_t c) {
+    uint8_t
+        r = (uint8_t)(c >> 16),
+        g = (uint8_t)(c >> 8),
+        b = (uint8_t)(c);
+
+    ws2812_set_color(led, r, g, b);
+}
+
+uint32_t ws2812_color(uint8_t r, uint8_t b, uint8_t g) {
+    return ((uint32_t)r << 16) | ((uint32_t) g << 8) | b;
+}
+
 void ws2812_clear(void) {
     uint16_t i;
 
     // initialize all the colors as off
     for(i = 0; i < strip.num_leds; i++) {
         ws2812_set_color(i, 0, 0, 0);
+    }
+}
+
+uint32_t wheel(char pos) {
+    if(pos < 85) {
+        return ws2812_color(pos * 3, 255 - pos * 3, 0);
+    }
+    else if(pos < 170) {
+        pos -= 85;
+        return ws2812_color(255 - pos * 3, 0, pos * 3);
+    }
+    else {
+        pos -= 170;
+        return ws2812_color(0, pos * 3, 255 - pos * 3);
+    }
+}
+
+void rainbow(uint32_t wait) {
+    uint16_t i, j;
+
+    for(j = 0; j < 256 * 5; j++) {
+        for(i = 0; i < strip.num_leds; i++) {
+            ws2812_set_color_single(
+                i, wheel(((i * 256 / strip.num_leds) + j) & 255));
+        }
+        ws2812_show();
+        delay(wait);
     }
 }
 
@@ -83,14 +128,9 @@ void setup_timer(void) {
     timer_disable_oc_output(TIM3, TIM_OC1);
     timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
     timer_set_period(TIM3, PERIOD);
-/*    timer_enable_preload(TIM3);*/
     timer_set_oc_polarity_high(TIM3, TIM_OC1);
-/*    timer_set_master_mode(TIM3, TIM_CCMR1_OC1M_PWM1);*/
     timer_set_oc_mode(TIM3, TIM_OC1, TIM_OCM_PWM1);
     timer_set_oc_value(TIM3, TIM_OC1, 0);
-/*    timer_enable_preload_complementry_enable_bits(TIM3);*/
-/*    timer_enable_oc_output(TIM3, TIM_OC1);*/
-/*    timer_enable_counter(TIM3);*/
     timer_enable_oc_output(TIM3, TIM_OC1);
 }
 
@@ -105,12 +145,7 @@ void setup_dma(void) {
     dma_set_peripheral_size(DMA1, DMA_CHANNEL4, DMA_CCR_PSIZE_16BIT);
     dma_set_read_from_memory(DMA1, DMA_CHANNEL4);
     dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL4);
-/*    dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL4);*/
-/*    dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL4);*/
     timer_enable_irq(TIM3, TIM_DIER_CC1DE);
-/*    timer_enable_irq(TIM3, TIM_DIER_CC1IE);*/
-/*    timer_enable_irq(TIM3, (1 << 9)); // ??*/
-/*    nvic_enable_irq(NVIC_DMA1_CHANNEL4_5_IRQ);*/
 }
 
 void ws2812_show(void) {
@@ -151,12 +186,8 @@ int main(void) {
 
     ws2812_clear();
 
-    for(i = 0; i < 60; i+=2) {
-        ws2812_set_color(i, 2, 0, 2);
-    }
-
     while(1) {
-        ws2812_show(); 
+        rainbow(21500);
     }
 
     return 0;
