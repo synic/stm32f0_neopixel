@@ -9,12 +9,16 @@
 #include <libopencm3/stm32/dma.h>
 #include <libopencm3/cm3/nvic.h>
 
-#include "colors.h"
-
 #define PERIOD 29
-#define TIM3_CCR1_Address 0x40000434
 
-uint16_t led_buffer[800];
+typedef struct {
+    int num_leds;
+    uint16_t dma_buffer[800];
+} ws2812;
+
+ws2812 strip;
+
+const uint8_t period = 29;
 const uint8_t low = 9;
 const uint8_t high = 17;
 
@@ -24,6 +28,80 @@ void setup_timer(void);
 void setup_dma(void);
 void delay(volatile uint32_t loops);
 void ws2812_send(uint8_t (*color)[3], uint16_t len);
+void ws2812_set_color(uint8_t led, uint8_t r, uint8_t g, uint8_t b);
+void ws2812_set_color_single(uint8_t led, uint32_t color);
+uint32_t ws2812_color(uint8_t r, uint8_t b, uint8_t g);
+void ws2812_clear(void);
+void ws2812_show(void);
+void rainbow(uint32_t wait);
+
+uint32_t wheel(char pos);
+
+void ws2812_set_color(uint8_t led, uint8_t r, uint8_t g, uint8_t b) {
+    uint32_t n = (led * 24);
+    uint8_t i;
+
+    for(i = 8; i-- > 0; n++) {
+        strip.dma_buffer[n] = g & (1 << i) ? high : low;
+    }
+
+    for(i = 8; i-- > 0; n++) {
+        strip.dma_buffer[n] = r & (1 << i) ? high : low;
+    }
+
+    for(i = 8; i-- > 0; n++) {
+        strip.dma_buffer[n] = b & (1 << i) ? high : low;
+    }
+}
+
+void ws2812_set_color_single(uint8_t led, uint32_t c) {
+    uint8_t
+        r = (uint8_t)(c >> 16),
+        g = (uint8_t)(c >> 8),
+        b = (uint8_t)(c);
+
+    ws2812_set_color(led, r, g, b);
+}
+
+uint32_t ws2812_color(uint8_t r, uint8_t b, uint8_t g) {
+    return ((uint32_t)r << 16) | ((uint32_t) g << 8) | b;
+}
+
+void ws2812_clear(void) {
+    uint16_t i;
+
+    // initialize all the colors as off
+    for(i = 0; i < strip.num_leds; i++) {
+        ws2812_set_color(i, 0, 0, 0);
+    }
+}
+
+uint32_t wheel(char pos) {
+    if(pos < 85) {
+        return ws2812_color(pos * 3, 255 - pos * 3, 0);
+    }
+    else if(pos < 170) {
+        pos -= 85;
+        return ws2812_color(255 - pos * 3, 0, pos * 3);
+    }
+    else {
+        pos -= 170;
+        return ws2812_color(0, pos * 3, 255 - pos * 3);
+    }
+}
+
+void rainbow(uint32_t wait) {
+    uint16_t i, j;
+
+    for(j = 0; j < 256 * 5; j++) {
+        for(i = 0; i < strip.num_leds; i++) {
+            ws2812_set_color_single(
+                i, wheel(((i * 256 / strip.num_leds) + j) & 255));
+        }
+        ws2812_show();
+        delay(wait);
+    }
+}
 
 void setup_clock(void) {
     rcc_clock_setup_in_hse_8mhz_out_48mhz();
@@ -50,14 +128,9 @@ void setup_timer(void) {
     timer_disable_oc_output(TIM3, TIM_OC1);
     timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
     timer_set_period(TIM3, PERIOD);
-/*    timer_enable_preload(TIM3);*/
     timer_set_oc_polarity_high(TIM3, TIM_OC1);
-/*    timer_set_master_mode(TIM3, TIM_CCMR1_OC1M_PWM1);*/
     timer_set_oc_mode(TIM3, TIM_OC1, TIM_OCM_PWM1);
     timer_set_oc_value(TIM3, TIM_OC1, 0);
-/*    timer_enable_preload_complementry_enable_bits(TIM3);*/
-/*    timer_enable_oc_output(TIM3, TIM_OC1);*/
-/*    timer_enable_counter(TIM3);*/
     timer_enable_oc_output(TIM3, TIM_OC1);
 }
 
@@ -67,77 +140,23 @@ void setup_dma(void) {
     dma_channel_reset(DMA1, DMA_CHANNEL4);
     dma_set_priority(DMA1, DMA_CHANNEL4, DMA_CCR_PL_HIGH);
     dma_set_peripheral_address(DMA1, DMA_CHANNEL4, (uint32_t)&TIM3_CCR1);
-    dma_set_memory_address(DMA1, DMA_CHANNEL4, (uint32_t)led_buffer);
+    dma_set_memory_address(DMA1, DMA_CHANNEL4, (uint32_t)strip.dma_buffer);
     dma_set_memory_size(DMA1, DMA_CHANNEL4, DMA_CCR_MSIZE_16BIT);
     dma_set_peripheral_size(DMA1, DMA_CHANNEL4, DMA_CCR_PSIZE_16BIT);
     dma_set_read_from_memory(DMA1, DMA_CHANNEL4);
     dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL4);
-/*    dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL4);*/
-/*    dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL4);*/
     timer_enable_irq(TIM3, TIM_DIER_CC1DE);
-/*    timer_enable_irq(TIM3, TIM_DIER_CC1IE);*/
-/*    timer_enable_irq(TIM3, (1 << 9)); // ??*/
-/*    nvic_enable_irq(NVIC_DMA1_CHANNEL4_5_IRQ);*/
 }
 
-void ws2812_send(uint8_t (*color)[3], uint16_t len) {
-    volatile uint8_t i, j, c;
-    uint8_t led;
+void ws2812_show(void) {
     uint16_t memaddr;
     uint16_t buffersize;
 
-    buffersize = (len * 24) + 42;
-    memaddr = 0;
-    led = 0;
-    c = 0;
-    uint8_t which[] = {1, 0, 2};
-	while (len)
-	{	
-		for (j = 0; j < 8; j++)					// GREEN data
-		{
-			if ( (color[led][1]<<j) & 0x80 )	// data sent MSB first, j = 0 is MSB j = 7 is LSB
-			{
-				led_buffer[memaddr] = high; 	// compare value for logical 1
-			}
-			else
-			{
-				led_buffer[memaddr] = low;	// compare value for logical 0
-			}
-			memaddr++;
-		}
-		
-		for (j = 0; j < 8; j++)					// RED data
-		{
-			if ( (color[led][0]<<j) & 0x80 )	// data sent MSB first, j = 0 is MSB j = 7 is LSB
-			{
-				led_buffer[memaddr] = high; 	// compare value for logical 1
-			}
-			else
-			{
-				led_buffer[memaddr] = low;	// compare value for logical 0
-			}
-			memaddr++;
-		}
-		
-		for (j = 0; j < 8; j++)					// BLUE data
-		{
-			if ( (color[led][2]<<j) & 0x80 )	// data sent MSB first, j = 0 is MSB j = 7 is LSB
-			{
-				led_buffer[memaddr] = high; 	// compare value for logical 1
-			}
-			else
-			{
-				led_buffer[memaddr] = low;	// compare value for logical 0
-			}
-			memaddr++;
-		}
-		
-        led++;
-		len--;
-	}
+    buffersize = (strip.num_leds * 24) + 42;
+    memaddr = (strip.num_leds * 24);
 
     while(memaddr < buffersize) {
-        led_buffer[memaddr] = 0;
+        strip.dma_buffer[memaddr] = 0;
         memaddr++;
     }
 
@@ -157,37 +176,19 @@ void delay(volatile uint32_t loops) {
 }
 
 int main(void) {
+    uint8_t i = 0;
+    strip.num_leds = 60;
+
     setup_clock();
     setup_gpio();
     setup_timer();
     setup_dma();
-    
-    uint8_t color[] = {0, 0, 255};
-/*    while(1) {*/
-/*        __asm("nop");*/
-/*    }*/
 
-	int16_t i;
-	while(1) {
-		for(i = 0; i < 746; i += 20)
-		{
-			ws2812_send(&eightbit[i], 20);
-			delay(200000L);
-            gpio_toggle(GPIOA, GPIO5);
-		}
+    ws2812_clear();
 
-
-		/* cycle through the colors on only one LED
-		 * this time only the first LED that data is
-		 * fed into will update
-		 */
-/*        for (i = 0; i < 766; i += 1)*/
-/*        {*/
-/*            ws2812_send(&eightbit[i], 1);*/
-/*            delay(100000L);*/
-/*        }*/
-
-	}
+    while(1) {
+        rainbow(21500);
+    }
 
     return 0;
 }
