@@ -5,7 +5,6 @@
 #define DMA1_BASE			DMA_BASE
 
 #include <libopencm3/stm32/dma.h>
-#include <libopencm3/cm3/nvic.h>
 
 #define PERIOD 29
 
