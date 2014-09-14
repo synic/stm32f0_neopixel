@@ -194,7 +194,8 @@ int main(void) {
     ws2812_clear();
 
     while(1) {
-        rainbow(3500);
+        rainbow(13500);
+        gpio_toggle(GPIOA, GPIO5);
     }
 
     return 0;
