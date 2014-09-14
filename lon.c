@@ -13,8 +13,8 @@
 
 typedef struct {
     int num_leds;
-    uint16_t dma_buffer[800];
     uint8_t brightness;
+    uint16_t dma_buffer[1000];
 } ws2812;
 
 ws2812 strip;
@@ -184,7 +184,7 @@ void delay(volatile uint32_t loops) {
 
 int main(void) {
     strip.num_leds = 60;
-    strip.brightness = 255; 
+    strip.brightness = 40; 
 
     setup_clock();
     setup_gpio();
@@ -194,7 +194,7 @@ int main(void) {
     ws2812_clear();
 
     while(1) {
-        rainbow(21500);
+        rainbow(3500);
     }
 
     return 0;
