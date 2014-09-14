@@ -6,8 +6,6 @@
 
 #include <libopencm3/stm32/dma.h>
 
-#define PERIOD 29
-
 typedef struct {
     int num_leds;
     uint8_t brightness;
@@ -131,7 +129,7 @@ void setup_timer(void) {
     timer_reset(TIM3);
     timer_disable_oc_output(TIM3, TIM_OC1);
     timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
-    timer_set_period(TIM3, PERIOD);
+    timer_set_period(TIM3, period);
     timer_set_oc_polarity_high(TIM3, TIM_OC1);
     timer_set_oc_mode(TIM3, TIM_OC1, TIM_OCM_PWM1);
     timer_set_oc_value(TIM3, TIM_OC1, 0);
