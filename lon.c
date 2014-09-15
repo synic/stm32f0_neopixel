@@ -17,6 +17,7 @@ ws2812 strip;
 const uint8_t period = 29;
 const uint8_t low = 9;
 const uint8_t high = 17;
+const uint8_t reset_len = 7;
 
 void setup_clock(void);
 void setup_gpio(void);
@@ -54,6 +55,8 @@ void ws2812_set_color(uint8_t led, uint8_t r, uint8_t g, uint8_t b) {
     for(i = 8; i-- > 0; n++) {
         strip.dma_buffer[n] = b & (1 << i) ? high : low;
     }
+
+    strip.dma_buffer[n] = 0;
 }
 
 void ws2812_set_color_single(uint8_t led, uint32_t c) {
@@ -154,7 +157,7 @@ void ws2812_show(void) {
     uint16_t memaddr;
     uint16_t buffersize;
 
-    buffersize = (strip.num_leds * 24) + 42;
+    buffersize = (strip.num_leds * 24) + reset_len;
     memaddr = (strip.num_leds * 24);
 
     while(memaddr < buffersize) {
@@ -189,7 +192,7 @@ int main(void) {
     ws2812_clear();
 
     while(1) {
-        rainbow(13500);
+        rainbow(0);
         gpio_toggle(GPIOA, GPIO5);
     }
 
