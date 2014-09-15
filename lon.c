@@ -177,7 +177,7 @@ void ws2812_show(void) {
 }
 
 void delay(volatile uint32_t loops) {
-    while(loops--) { }    
+    while(loops--);
 }
 
 int main(void) {
