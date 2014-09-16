@@ -17,7 +17,7 @@ ws2812 strip;
 const uint8_t period = 29;
 const uint8_t low = 9;
 const uint8_t high = 17;
-const uint8_t reset_len = 7;
+const uint8_t reset_len = 16;
 
 void setup_clock(void);
 void setup_gpio(void);
@@ -56,7 +56,6 @@ void ws2812_set_color(uint8_t led, uint8_t r, uint8_t g, uint8_t b) {
         strip.dma_buffer[n] = b & (1 << i) ? high : low;
     }
 
-    strip.dma_buffer[n] = 0;
 }
 
 void ws2812_set_color_single(uint8_t led, uint32_t c) {
@@ -177,7 +176,7 @@ void ws2812_show(void) {
 }
 
 void delay(volatile uint32_t loops) {
-    while(loops--);
+    while(loops--) {}
 }
 
 int main(void) {
@@ -192,7 +191,7 @@ int main(void) {
     ws2812_clear();
 
     while(1) {
-        rainbow(0);
+        rainbow(5000);
         gpio_toggle(GPIOA, GPIO5);
     }
 
