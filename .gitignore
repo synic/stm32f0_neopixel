@@ -68,3 +68,4 @@ eagle.epf
 *.eps
 kicad/gerber/
 _autosave*
+format

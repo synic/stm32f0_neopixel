@@ -181,7 +181,7 @@ void delay(volatile uint32_t loops) {
 
 int main(void) {
     strip.num_leds = 60;
-    strip.brightness = 40; 
+    strip.brightness = 20; 
 
     setup_clock();
     setup_gpio();
@@ -189,9 +189,21 @@ int main(void) {
     setup_dma();
 
     ws2812_clear();
+/*    strip.num_leds = 1;*/
+/*    ws2812_set_color(0, 40, 0, 50);*/
+/*    ws2812_show();*/
+/*    while(1);*/
+/*    uint8_t i;*/
+/*    for(i = 0; i < strip.num_leds; i+=5) {*/
+/*        ws2812_set_color(i, 2, 0, 2);*/
+/*    }*/
+
+/*    ws2812_show();*/
+
+/*    while(1);*/
 
     while(1) {
-        rainbow(5000);
+        rainbow(0);
         gpio_toggle(GPIOA, GPIO5);
     }
 
