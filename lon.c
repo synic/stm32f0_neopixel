@@ -189,9 +189,12 @@ int main(void) {
     setup_dma();
 
     ws2812_clear();
+/*    ws2812_show();*/
 /*    strip.num_leds = 1;*/
+/*    strip.brightness = 0;*/
 /*    ws2812_set_color(0, 40, 0, 50);*/
 /*    ws2812_show();*/
+
 /*    while(1);*/
 /*    uint8_t i;*/
 /*    for(i = 0; i < strip.num_leds; i+=5) {*/

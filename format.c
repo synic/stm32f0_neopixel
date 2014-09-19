@@ -33,7 +33,7 @@ void print_index(uint8_t index) {
     uint8_t i;
     uint32_t n = (index * 24);
     for(i = n; i < 24; i++) {
-        if(i % 8 == 0 && i) printf(" ");
+        if(i % 8 == 0 && i && i != 24) printf(" ");
         printf("%d", buffer[i]);
     }
 
