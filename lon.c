@@ -1,9 +1,6 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
-
-#define DMA1_BASE			DMA_BASE
-
 #include <libopencm3/stm32/dma.h>
 
 typedef struct {
@@ -108,22 +105,23 @@ void rainbow(uint32_t wait) {
 }
 
 void setup_clock(void) {
-    rcc_clock_setup_in_hse_8mhz_out_48mhz();
+    rcc_clock_setup_hsi(&hsi_8mhz[CLOCK_48MHZ]);
 }
 
 void setup_gpio(void) {
     rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOC);
     
     // set up the test LED
     gpio_mode_setup(GPIOA, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE,
         GPIO5);
 
     // set up the pin for timer output
-    gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO6);
-    gpio_set_output_options(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_HIGH, 
+    gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO6);
+    gpio_set_output_options(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, 
         GPIO6);
 
-    gpio_set_af(GPIOA, GPIO_AF1, GPIO6);
+    gpio_set_af(GPIOC, GPIO_AF2, GPIO6);
 }
 
 void setup_timer(void) {
@@ -139,16 +137,16 @@ void setup_timer(void) {
 }
 
 void setup_dma(void) {
-    rcc_periph_clock_enable(RCC_DMA);
+    rcc_periph_clock_enable(RCC_DMA1);
 
-    dma_channel_reset(DMA1, DMA_CHANNEL4);
-    dma_set_priority(DMA1, DMA_CHANNEL4, DMA_CCR_PL_HIGH);
-    dma_set_peripheral_address(DMA1, DMA_CHANNEL4, (uint32_t)&TIM3_CCR1);
-    dma_set_memory_address(DMA1, DMA_CHANNEL4, (uint32_t)strip.dma_buffer);
-    dma_set_memory_size(DMA1, DMA_CHANNEL4, DMA_CCR_MSIZE_16BIT);
-    dma_set_peripheral_size(DMA1, DMA_CHANNEL4, DMA_CCR_PSIZE_16BIT);
-    dma_set_read_from_memory(DMA1, DMA_CHANNEL4);
-    dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL4);
+    dma_channel_reset(DMA1, DMA_CHANNEL6);
+    dma_set_priority(DMA1, DMA_CHANNEL6, DMA_CCR_PL_HIGH);
+    dma_set_peripheral_address(DMA1, DMA_CHANNEL6, (uint32_t)&TIM3_CCR1);
+    dma_set_memory_address(DMA1, DMA_CHANNEL6, (uint32_t)strip.dma_buffer);
+    dma_set_memory_size(DMA1, DMA_CHANNEL6, DMA_CCR_MSIZE_16BIT);
+    dma_set_peripheral_size(DMA1, DMA_CHANNEL6, DMA_CCR_PSIZE_16BIT);
+    dma_set_read_from_memory(DMA1, DMA_CHANNEL6);
+    dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL6);
     timer_enable_irq(TIM3, TIM_DIER_CC1DE);
 }
 
@@ -165,14 +163,14 @@ void ws2812_show(void) {
     }
 
     timer_set_oc_value(TIM3, TIM_OC1, 0);
-    dma_set_number_of_data(DMA1, DMA_CHANNEL4, buffersize);
-    dma_enable_channel(DMA1, DMA_CHANNEL4);
+    dma_set_number_of_data(DMA1, DMA_CHANNEL6, buffersize);
+    dma_enable_channel(DMA1, DMA_CHANNEL6);
     timer_enable_counter(TIM3);
-    while(!dma_get_interrupt_flag(DMA1, DMA_CHANNEL4, DMA_TCIF));
+    while(!dma_get_interrupt_flag(DMA1, DMA_CHANNEL6, DMA_TCIF));
 
-    dma_disable_channel(DMA1, DMA_CHANNEL4);
+    dma_disable_channel(DMA1, DMA_CHANNEL6);
     timer_disable_counter(TIM3);
-    dma_clear_interrupt_flags(DMA1, DMA_CHANNEL4, DMA_TCIF);
+    dma_clear_interrupt_flags(DMA1, DMA_CHANNEL6, DMA_TCIF);
 }
 
 void delay(volatile uint32_t loops) {

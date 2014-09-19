@@ -19,7 +19,7 @@
 
 BINARY = lon
 
-LDSCRIPT = stm32f0.ld
+LDSCRIPT = stm32f3.ld
 
 include Makefile.include
 

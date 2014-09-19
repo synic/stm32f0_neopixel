@@ -18,15 +18,15 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Linker script for ST STM32F0DISCOVERY (STM32F051R8T6, 64K flash, 8K RAM). */
+/* Linker script for ST STM32F3DISCOVERY (STM32F303VC, 256K flash, 48K RAM (Of which 8kB are CCM RAM and 40KB are SRAM). */
 
 /* Define memory regions. */
 MEMORY
 {
-	rom (rx) : ORIGIN = 0x08000000, LENGTH = 16K
-	ram (rwx) : ORIGIN = 0x20000000, LENGTH = 4K
+	rom (rx) : ORIGIN = 0x08000000, LENGTH = 256K
+	ram (rwx) : ORIGIN = 0x20000000, LENGTH = 40K
 }
 
 /* Include the common ld script. */
-INCLUDE libopencm3_stm32f0.ld
+INCLUDE libopencm3_stm32f3.ld
 
