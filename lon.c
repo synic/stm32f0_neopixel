@@ -140,13 +140,13 @@ void setup_dma(void) {
     rcc_periph_clock_enable(RCC_DMA1);
     dma_channel_reset(DMA1, DMA_CHANNEL2);
     dma_set_priority(DMA1, DMA_CHANNEL2, DMA_CCR_PL_HIGH);
-    dma_set_peripheral_address(DMA1, DMA_CHANNEL2, (uint32_t)&TIM3_CCR1);
+    dma_set_peripheral_address(DMA1, DMA_CHANNEL2, (uint32_t)&TIM3_CCR3);
     dma_set_memory_address(DMA1, DMA_CHANNEL2, (uint32_t)strip.dma_buffer);
     dma_set_memory_size(DMA1, DMA_CHANNEL2, DMA_CCR_MSIZE_16BIT);
     dma_set_peripheral_size(DMA1, DMA_CHANNEL2, DMA_CCR_PSIZE_16BIT);
     dma_set_read_from_memory(DMA1, DMA_CHANNEL2);
     dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL2);
-    timer_enable_irq(TIM3, TIM_DIER_CC1DE);
+    timer_enable_irq(TIM3, TIM_DIER_CC3DE);
 }
 
 void ws2812_show(void) {
