@@ -20,7 +20,7 @@ void setup_clock(void);
 void setup_gpio(void);
 void setup_timer(void);
 void setup_dma(void);
-void delay(volatile uint32_t loops);
+void delay(volatile uint64_t loops);
 void ws2812_send(uint8_t (*color)[3], uint16_t len);
 void ws2812_set_color(uint8_t led, uint8_t r, uint8_t g, uint8_t b);
 void ws2812_set_color_single(uint8_t led, uint32_t color);
@@ -117,36 +117,35 @@ void setup_gpio(void) {
         GPIO5);
 
     // set up the pin for timer output
-    gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO6);
-    gpio_set_output_options(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, 
-        GPIO6);
+    gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO0);
+    gpio_set_output_options(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, 
+        GPIO0);
 
-    gpio_set_af(GPIOC, GPIO_AF2, GPIO6);
+    gpio_set_af(GPIOB, GPIO_AF2, GPIO0);
 }
 
 void setup_timer(void) {
     rcc_periph_clock_enable(RCC_TIM3);
     timer_reset(TIM3);
-    timer_disable_oc_output(TIM3, TIM_OC1);
+    timer_disable_oc_output(TIM3, TIM_OC3);
     timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
     timer_set_period(TIM3, period);
-    timer_set_oc_polarity_high(TIM3, TIM_OC1);
-    timer_set_oc_mode(TIM3, TIM_OC1, TIM_OCM_PWM1);
-    timer_set_oc_value(TIM3, TIM_OC1, 0);
-    timer_enable_oc_output(TIM3, TIM_OC1);
+    timer_set_oc_polarity_high(TIM3, TIM_OC3);
+    timer_set_oc_mode(TIM3, TIM_OC3, TIM_OCM_PWM1);
+    timer_set_oc_value(TIM3, TIM_OC3, 0);
+    timer_enable_oc_output(TIM3, TIM_OC3);
 }
 
 void setup_dma(void) {
     rcc_periph_clock_enable(RCC_DMA1);
-
-    dma_channel_reset(DMA1, DMA_CHANNEL6);
-    dma_set_priority(DMA1, DMA_CHANNEL6, DMA_CCR_PL_HIGH);
-    dma_set_peripheral_address(DMA1, DMA_CHANNEL6, (uint32_t)&TIM3_CCR1);
-    dma_set_memory_address(DMA1, DMA_CHANNEL6, (uint32_t)strip.dma_buffer);
-    dma_set_memory_size(DMA1, DMA_CHANNEL6, DMA_CCR_MSIZE_16BIT);
-    dma_set_peripheral_size(DMA1, DMA_CHANNEL6, DMA_CCR_PSIZE_16BIT);
-    dma_set_read_from_memory(DMA1, DMA_CHANNEL6);
-    dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL6);
+    dma_channel_reset(DMA1, DMA_CHANNEL2);
+    dma_set_priority(DMA1, DMA_CHANNEL2, DMA_CCR_PL_HIGH);
+    dma_set_peripheral_address(DMA1, DMA_CHANNEL2, (uint32_t)&TIM3_CCR1);
+    dma_set_memory_address(DMA1, DMA_CHANNEL2, (uint32_t)strip.dma_buffer);
+    dma_set_memory_size(DMA1, DMA_CHANNEL2, DMA_CCR_MSIZE_16BIT);
+    dma_set_peripheral_size(DMA1, DMA_CHANNEL2, DMA_CCR_PSIZE_16BIT);
+    dma_set_read_from_memory(DMA1, DMA_CHANNEL2);
+    dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL2);
     timer_enable_irq(TIM3, TIM_DIER_CC1DE);
 }
 
@@ -162,23 +161,24 @@ void ws2812_show(void) {
         memaddr++;
     }
 
-    timer_set_oc_value(TIM3, TIM_OC1, 0);
-    dma_set_number_of_data(DMA1, DMA_CHANNEL6, buffersize);
-    dma_enable_channel(DMA1, DMA_CHANNEL6);
+    timer_set_oc_value(TIM3, TIM_OC3, 0);
+    dma_set_number_of_data(DMA1, DMA_CHANNEL2, buffersize);
+    dma_enable_channel(DMA1, DMA_CHANNEL2);
     timer_enable_counter(TIM3);
-    while(!dma_get_interrupt_flag(DMA1, DMA_CHANNEL6, DMA_TCIF));
+    while(!dma_get_interrupt_flag(DMA1, DMA_CHANNEL2, DMA_TCIF));
 
-    dma_disable_channel(DMA1, DMA_CHANNEL6);
+    dma_disable_channel(DMA1, DMA_CHANNEL2);
     timer_disable_counter(TIM3);
-    dma_clear_interrupt_flags(DMA1, DMA_CHANNEL6, DMA_TCIF);
+    dma_clear_interrupt_flags(DMA1, DMA_CHANNEL2, DMA_TCIF);
 }
 
-void delay(volatile uint32_t loops) {
+void delay(volatile uint64_t loops) {
+    loops *= 1000;
     while(loops--) {}
 }
 
 int main(void) {
-    strip.num_leds = 60;
+    strip.num_leds = 8;
     strip.brightness = 20; 
 
     setup_clock();
@@ -186,7 +186,7 @@ int main(void) {
     setup_timer();
     setup_dma();
 
-    ws2812_clear();
+/*    ws2812_clear();*/
 /*    ws2812_show();*/
 /*    strip.num_leds = 1;*/
 /*    strip.brightness = 0;*/
@@ -202,6 +202,10 @@ int main(void) {
 /*    ws2812_show();*/
 
 /*    while(1);*/
+/*    while(1) {*/
+/*        gpio_toggle(GPIOA, GPIO5);*/
+/*        delay(1000);*/
+/*    }*/
 
     while(1) {
         rainbow(0);
