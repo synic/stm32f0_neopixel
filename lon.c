@@ -11,10 +11,10 @@ typedef struct {
 
 ws2812 strip;
 
-const uint8_t period = 29;
-const uint8_t low = 9;
-const uint8_t high = 17;
-const uint8_t reset_len = 16;
+const uint8_t period = 59;
+const uint8_t low = 17;
+const uint8_t high = 25;
+const uint8_t reset_len = 8;
 
 void setup_clock(void);
 void setup_gpio(void);
@@ -106,12 +106,10 @@ void rainbow(uint32_t wait) {
 
 void setup_clock(void) {
     rcc_clock_setup_hsi(&hsi_8mhz[CLOCK_48MHZ]);
-/*    rcc_clock_setup_in_hse_8mhz_out_48mhz();*/
 }
 
 void setup_gpio(void) {
     rcc_periph_clock_enable(RCC_GPIOA);
-    rcc_periph_clock_enable(RCC_GPIOE);
     rcc_periph_clock_enable(RCC_GPIOB);
     
     // set up the test LED
@@ -131,7 +129,6 @@ void setup_timer(void) {
     timer_reset(TIM3);
     timer_disable_oc_output(TIM3, TIM_OC3);
     timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
-    timer_set_prescaler(TIM3, 1);
     timer_set_period(TIM3, period);
     timer_set_oc_polarity_high(TIM3, TIM_OC3);
     timer_set_oc_mode(TIM3, TIM_OC3, TIM_OCM_PWM1);
@@ -181,7 +178,7 @@ void delay(volatile uint64_t loops) {
 }
 
 int main(void) {
-    strip.num_leds = 8;
+    strip.num_leds = 60;
     strip.brightness = 20; 
 
     setup_clock();
