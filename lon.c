@@ -2,6 +2,7 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/dma.h>
+#include <libopencm3/stm32/rtc.h>
 
 typedef struct {
     int num_leds;
