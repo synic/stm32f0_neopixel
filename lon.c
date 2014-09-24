@@ -17,7 +17,7 @@ ws2812 strip;
 const uint8_t period = 59;
 const uint8_t low = 17;
 const uint8_t high = 25;
-const uint8_t reset_len = 130;
+const uint8_t reset_len = 8;
 
 void setup_clock(void);
 void setup_gpio(void);
@@ -108,8 +108,8 @@ void rainbow(uint32_t wait) {
 }
 
 void setup_clock(void) {
-    //rcc_clock_setup_in_hsi_out_48mhz();
-    rcc_clock_setup_in_hse_8mhz_out_48mhz();
+    rcc_clock_setup_in_hsi_out_48mhz();
+    //rcc_clock_setup_in_hse_8mhz_out_48mhz();
 }
 
 void setup_gpio(void) {
@@ -182,7 +182,7 @@ void delay(volatile uint32_t loops) {
 }
 
 int main(void) {
-    strip.num_leds = 60;
+    strip.num_leds = 40;
     strip.brightness = 20; 
 
     setup_clock();
