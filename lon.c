@@ -106,11 +106,13 @@ void rainbow(uint32_t wait) {
 
 void setup_clock(void) {
     rcc_clock_setup_hsi(&hsi_8mhz[CLOCK_48MHZ]);
+/*    rcc_clock_setup_in_hse_8mhz_out_48mhz();*/
 }
 
 void setup_gpio(void) {
     rcc_periph_clock_enable(RCC_GPIOA);
-    rcc_periph_clock_enable(RCC_GPIOC);
+    rcc_periph_clock_enable(RCC_GPIOE);
+    rcc_periph_clock_enable(RCC_GPIOB);
     
     // set up the test LED
     gpio_mode_setup(GPIOA, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE,
@@ -118,7 +120,7 @@ void setup_gpio(void) {
 
     // set up the pin for timer output
     gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO0);
-    gpio_set_output_options(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, 
+    gpio_set_output_options(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, 
         GPIO0);
 
     gpio_set_af(GPIOB, GPIO_AF2, GPIO0);
@@ -129,6 +131,7 @@ void setup_timer(void) {
     timer_reset(TIM3);
     timer_disable_oc_output(TIM3, TIM_OC3);
     timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+    timer_set_prescaler(TIM3, 1);
     timer_set_period(TIM3, period);
     timer_set_oc_polarity_high(TIM3, TIM_OC3);
     timer_set_oc_mode(TIM3, TIM_OC3, TIM_OCM_PWM1);
