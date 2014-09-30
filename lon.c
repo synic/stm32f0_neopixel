@@ -9,7 +9,7 @@
 typedef struct {
     int num_leds;
     uint8_t brightness;
-    uint16_t dma_buffer[1000];
+    uint8_t dma_buffer[3000];
 } ws2812;
 
 ws2812 strip;
@@ -17,7 +17,7 @@ ws2812 strip;
 const uint8_t period = 59;
 const uint8_t low = 17;
 const uint8_t high = 25;
-const uint8_t reset_len = 8;
+const uint8_t reset_len = 25;
 
 void setup_clock(void);
 void setup_gpio(void);
@@ -147,7 +147,7 @@ void setup_dma(void) {
     dma_set_priority(DMA1, DMA_CHANNEL4, DMA_CCR_PL_HIGH);
     dma_set_peripheral_address(DMA1, DMA_CHANNEL4, (uint32_t)&TIM3_CCR1);
     dma_set_memory_address(DMA1, DMA_CHANNEL4, (uint32_t)strip.dma_buffer);
-    dma_set_memory_size(DMA1, DMA_CHANNEL4, DMA_CCR_MSIZE_16BIT);
+    dma_set_memory_size(DMA1, DMA_CHANNEL4, DMA_CCR_MSIZE_8BIT);
     dma_set_peripheral_size(DMA1, DMA_CHANNEL4, DMA_CCR_PSIZE_16BIT);
     dma_set_read_from_memory(DMA1, DMA_CHANNEL4);
     dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL4);
@@ -182,13 +182,15 @@ void delay(volatile uint32_t loops) {
 }
 
 int main(void) {
-    strip.num_leds = 40;
-    strip.brightness = 20; 
+    strip.num_leds = 144;
+    strip.brightness = 30; 
 
     setup_clock();
     setup_gpio();
     setup_timer();
     setup_dma();
+
+    ws2812_set_color(89, 0, 0, 0);
 
     ws2812_clear();
 /*    ws2812_show();*/
