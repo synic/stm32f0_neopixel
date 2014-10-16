@@ -101,6 +101,7 @@ CFLAGS += -MD -MP -MF .dep/$(@F).d
 LDSCRIPT = linker/STM32F303VC_FLASH.ld
 # libraries
 LIBS = -Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group
+LIBS = -lc -lm -lnosys
 LIBDIR =
 LDFLAGS = -mthumb -mcpu=cortex-m4 -specs=nano.specs -T$(LDSCRIPT) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
 

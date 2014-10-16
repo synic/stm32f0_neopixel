@@ -196,7 +196,7 @@ int main(void)
 {
   SystemInit();
   strip.num_leds = 144;
-  strip.brightness = 50;
+  strip.brightness = 30;
 
   setup_gpio();
   setup_timer();
@@ -209,6 +209,7 @@ int main(void)
   while (1)
   {
     rainbow(0);
+    delay(100);
 /*    if(set) {*/
 /*        GPIO_ResetBits(GPIOA, GPIO_Pin_5);*/
 /*        set = 0;*/
